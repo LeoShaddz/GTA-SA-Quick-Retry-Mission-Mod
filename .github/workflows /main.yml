@@ -1,0 +1,39 @@
+name: Build RetryMissionPause
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar MSVC (x86 / Win32)
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
+
+      - name: Compilar
+        shell: cmd
+        run: |
+          cl /nologo /O2 /MT /LD /EHsc /W3 RetryMissionPause.cpp /link /OUT:RetryMissionPause.dll user32.lib kernel32.lib
+          ren RetryMissionPause.dll RetryMissionPause.asi
+
+      - name: Conferir arquitetura (deve ser x86)
+        shell: cmd
+        run: dumpbin /headers RetryMissionPause.asi | findstr /C:"machine"
+
+      - name: Enviar artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: RetryMissionPause
+          path: |
+            RetryMissionPause.asi
+            RetryMissionPause.ini
+          if-no-files-found: error
